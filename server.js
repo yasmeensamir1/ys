@@ -1,19 +1,13 @@
-/**
- * Secure Visitor Logging Server
- * For Cybersecurity / Monitoring purposes
- */
-
 const express = require("express");
 const path = require("path");
 
-// Node 18+ فيه fetch built-in
 const app = express();
 app.use(express.json());
 
-// ===== ENV CONFIG =====
-const TELEGRAM_BOT_TOKEN = process.env.TG_TOKEN;
-const TELEGRAM_CHAT_ID = process.env.TG_CHAT_ID;
-const PORT = process.env.PORT || 3000;
+// ⚠️ حط القيم بإيدك هنا
+const TELEGRAM_BOT_TOKEN = "8099317271:AAGndvsVqk9qNnzitfLhqp8UenEzlxxBA8Y";
+const TELEGRAM_CHAT_ID = "8059402181";
+const PORT = 3000;
 
 // ===== HELPERS =====
 function maskIP(ip) {
@@ -46,70 +40,50 @@ app.post("/visit", async (req, res) => {
 
     const maskedIP = maskIP(rawIP);
 
-    // ===== GEO LOOKUP =====
     const geoRes = await fetch(
       `http://ip-api.com/json/${rawIP}?fields=66846719`
     );
     const geo = await geoRes.json();
 
-    const userAgent = req.headers["user-agent"] || "unknown";
-    const isMobile = /mobile|android|iphone/i.test(userAgent);
+    const ua = req.headers["user-agent"] || "unknown";
+    const isMobile = /mobile|android|iphone/i.test(ua);
 
-    // ===== DATA FROM FRONTEND (OPTIONAL) =====
-    const {
-      screen,
-      timezone,
-      platform,
-      language,
-    } = req.body || {};
-
-    const logMessage = `
-🛡️ Security Visit Log
-======================
+    const log = `
+🛡️ Visit Log
+----------------------
 IP: ${maskedIP}
-Country: ${geo.country || "N/A"}
-City: ${geo.city || "N/A"}
-ISP: ${geo.isp || "N/A"}
-ASN: ${geo.as || "N/A"}
+Country: ${geo.country}
+City: ${geo.city}
+ISP: ${geo.isp}
+ASN: ${geo.as}
 VPN/Proxy: ${geo.proxy}
 Hosting: ${geo.hosting}
 Location: ${geo.lat}, ${geo.lon}
 
 Device: ${isMobile ? "Mobile" : "Desktop"}
-Platform: ${platform || "N/A"}
-Screen: ${screen || "N/A"}
+User-Agent:
+${ua}
 
-Browser / OS:
-${userAgent}
-
-Language: ${language || req.headers["accept-language"]}
-
-Timezone: ${timezone || "N/A"}
+Language: ${req.headers["accept-language"]}
 Referer: ${req.headers["referer"] || "Direct"}
 
-Time (Local): ${new Date().toLocaleString()}
-Time (UTC): ${new Date().toUTCString()}
-
---- RAW HEADERS ---
-${JSON.stringify(req.headers, null, 2)}
-======================
+Time: ${new Date().toLocaleString()}
+----------------------
 `;
 
-    await sendToTelegram(logMessage);
-
+    await sendToTelegram(log);
     res.json({ logged: true });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "logging_failed" });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "failed" });
   }
 });
 
-// ===== SERVE PAGE =====
+// ===== SERVE YOUR HTML =====
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
-// ===== START =====
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Running on http://localhost:${PORT}`);
 });
