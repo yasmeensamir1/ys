@@ -4,12 +4,12 @@ const path = require("path");
 const app = express();
 app.use(express.json());
 
-// ====== CONFIG ======
-const TELEGRAM_BOT_TOKEN = "8099317271:AAGndvsVqk9qNnzitfLhqp8UenEzlxxBA8Y";
-const TELEGRAM_CHAT_ID = "8059402181";
+// ===== CONFIG (مباشر زي ما طلبت) =====
+const TELEGRAM_BOT_TOKEN = "PUT_YOUR_BOT_TOKEN_HERE";
+const TELEGRAM_CHAT_ID = "PUT_YOUR_CHAT_ID_HERE";
 const PORT = process.env.PORT || 3000;
 
-// ====== TELEGRAM ======
+// ===== TELEGRAM =====
 async function sendToTelegram(text) {
   await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
     method: "POST",
@@ -21,50 +21,55 @@ async function sendToTelegram(text) {
   });
 }
 
-// ====== WHOIS via RDAP (بديل آمن لـ whois CLI) ======
-async function getWhois(ip) {
-  try {
-    // RIPE / ARIN RDAP (يشتغل عالميًا)
-    const res = await fetch(`https://rdap.arin.net/registry/ip/${ip}`);
-    const data = await res.json();
+// ===== HELPERS =====
+function getIP(req) {
+  return (
+    req.headers["x-forwarded-for"]?.split(",")[0] ||
+    req.socket.remoteAddress ||
+    "unknown"
+  );
+}
 
-    return {
-      network: data.name,
-      cidr: data.cidr0_cidrs?.[0]?.v4prefix + "/" + data.cidr0_cidrs?.[0]?.length,
-      org: data.entities?.[0]?.vcardArray?.[1]?.find(v => v[0] === "fn")?.[3],
-      country: data.country,
-      handle: data.handle,
-    };
+function maskIP(ip) {
+  if (ip.includes(".")) {
+    const p = ip.split(".");
+    p[3] = "0";
+    return p.join(".");
+  }
+  return ip;
+}
+
+// ===== RDAP (WHOIS البديل) =====
+async function getRDAP(ip) {
+  try {
+    const res = await fetch(`https://rdap.org/ip/${ip}`);
+    return await res.json();
   } catch {
     return null;
   }
 }
 
-// ====== VISIT LOGGER ======
+// ===== VISIT ENDPOINT =====
 app.post("/visit", async (req, res) => {
   try {
-    const ip =
-      req.headers["x-forwarded-for"]?.split(",")[0] ||
-      req.socket.remoteAddress;
+    const ip = getIP(req);
+    const maskedIP = maskIP(ip);
 
-    // ===== GEO IP =====
+    const consent = req.body?.consent === true;
+
+    // Geo
     const geoRes = await fetch(
       `http://ip-api.com/json/${ip}?fields=66846719`
     );
     const geo = await geoRes.json();
 
-    // ===== WHOIS =====
-    const whois = await getWhois(ip);
+    // RDAP
+    const rdap = consent ? await getRDAP(ip) : null;
 
-    const ua = req.headers["user-agent"] || "unknown";
-    const isMobile = /mobile|android|iphone/i.test(ua);
-
-    const message = `
+    const log = `
 🛡️ Visit Log
-----------------------
-IP: ${ip}
-
-🌍 Geo Location
+========================
+IP: ${maskedIP}
 Country: ${geo.country}
 City: ${geo.city}
 ISP: ${geo.isp}
@@ -73,35 +78,43 @@ VPN/Proxy: ${geo.proxy}
 Hosting: ${geo.hosting}
 Location: ${geo.lat}, ${geo.lon}
 
-📡 WHOIS / Network
-Org: ${whois?.org || "N/A"}
-Network: ${whois?.network || "N/A"}
-CIDR: ${whois?.cidr || "N/A"}
-Handle: ${whois?.handle || "N/A"}
-Country: ${whois?.country || "N/A"}
+Device: ${
+      /mobile|android|iphone/i.test(req.headers["user-agent"])
+        ? "Mobile"
+        : "Desktop"
+    }
+User-Agent:
+${req.headers["user-agent"]}
 
-📱 Device
-Type: ${isMobile ? "Mobile" : "Desktop"}
+Language: ${req.headers["accept-language"]}
+Referer: ${req.headers["referer"] || "Direct"}
 
-🧠 User-Agent
-${ua}
+Consent Given: ${consent ? "YES" : "NO"}
 
-🌐 Language: ${req.headers["accept-language"]}
-🔗 Referer: ${req.headers["referer"] || "Direct"}
+${
+  consent && rdap
+    ? `--- RDAP INFO ---
+Network Name: ${rdap.name || "N/A"}
+Start IP: ${rdap.startAddress || "N/A"}
+End IP: ${rdap.endAddress || "N/A"}
+Country (RDAP): ${rdap.country || "N/A"}
+Registry: ${rdap.handle || "N/A"}`
+    : "RDAP: Not collected (No consent)"
+}
 
-⏰ Time: ${new Date().toLocaleString()}
-----------------------
+Time: ${new Date().toLocaleString()}
+========================
 `;
 
-    await sendToTelegram(message);
-    res.json({ logged: true });
+    await sendToTelegram(log);
+    res.json({ ok: true });
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: "failed" });
   }
 });
 
-// ====== SERVE HTML ======
+// ===== PAGE =====
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
