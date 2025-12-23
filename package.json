@@ -1,0 +1,13 @@
+{
+  "name": "one-page-tracker",
+  "version": "1.0.0",
+  "description": "One page site with IP logging + Telegram bot",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
