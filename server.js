@@ -5,7 +5,8 @@ const app = express();
 // إعدادات السيرفر
 app.use(express.json());
 app.use(express.static(__dirname)); // ضروري جداً لظهور الصور (1.jpg, 2.jpg...)
-
+// أضف هذا السطر بعد تعريف app
+app.use(express.static(__dirname));
 // ====== CONFIG ======
 const TELEGRAM_BOT_TOKEN = "8099317271:AAGndvsVqk9qNnzitfLhqp8UenEzlxxBA8Y";
 const TELEGRAM_CHAT_ID = "8059402181";
@@ -121,3 +122,5 @@ app.get("/", (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
+// أضف هذا السطر بعد تعريف app
+app.use(express.static(__dirname));
