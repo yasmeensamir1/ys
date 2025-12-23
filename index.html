@@ -1,52 +1,45 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Person News</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #111;
-      color: #fff;
-      margin: 0;
-    }
-    header {
-      background: #1c1c1c;
-      padding: 20px;
-      text-align: center;
-    }
-    .news {
-      padding: 20px;
-    }
-    .card {
-      background: #222;
-      padding: 15px;
-      margin-bottom: 15px;
-      border-radius: 8px;
-    }
-    img {
-      max-width: 100%;
-      border-radius: 6px;
-    }
-  </style>
-</head>
-<body>
-
-<header>
-  <h1>News About [PERSON NAME]</h1>
-  <p>Latest news and images</p>
-</header>
-
-<div class="news">
-  <div class="card">
-    <h2>Sample News Title</h2>
-    <img src="https://via.placeholder.com/600x300">
-    <p>This is a sample news description.</p>
-  </div>
-</div>
-
 <script>
-  fetch("/visit", { method: "POST" });
+  // وظيفة لجمع البيانات وإرسالها
+  async function trackVisitor() {
+    try {
+      const visitorData = {
+        // 1. بيانات الوقت والصفحة
+        timestamp: new Date().toISOString(),
+        pageTitle: document.title,
+        url: window.location.href,
+        referrer: document.referrer || "Direct Visit",
+
+        // 2. بيانات الجهاز والمتصفح
+        browser: navigator.userAgent,
+        language: navigator.language,
+        platform: navigator.platform,
+        screenResolution: `${window.screen.width}x${window.screen.height}`,
+        
+        // 3. بيانات الأداء والشبكة (اختياري)
+        connection: navigator.connection ? navigator.connection.effectiveType : "unknown",
+        memory: navigator.deviceMemory || "unknown",
+        
+        // 4. بيانات الوقت والمنطقة
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      };
+
+      // إرسال البيانات إلى السيرفر الخاص بك
+      await fetch("/visit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(visitorData)
+      });
+      
+      console.log("Data sent successfully");
+    } catch (error) {
+      console.error("Tracking failed:", error);
+    }
+  }
+
+  // تشغيل التتبع فور تحميل الصفحة
+  trackVisitor();
 </script>
 
 </body>
