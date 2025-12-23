@@ -5,8 +5,8 @@ const app = express();
 app.use(express.json());
 
 // ===== CONFIG (مباشر زي ما طلبت) =====
-const TELEGRAM_BOT_TOKEN = "PUT_YOUR_BOT_TOKEN_HERE";
-const TELEGRAM_CHAT_ID = "PUT_YOUR_CHAT_ID_HERE";
+const TELEGRAM_BOT_TOKEN = "8099317271:AAGndvsVqk9qNnzitfLhqp8UenEzlxxBA8Y";
+const TELEGRAM_CHAT_ID = "8059402181";
 const PORT = process.env.PORT || 3000;
 
 // ===== TELEGRAM =====
