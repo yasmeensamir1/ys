@@ -46,18 +46,7 @@
 </div>
 
 <script>
-  fetch("/visit", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      screen: screen.width + "x" + screen.height,
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      platform: navigator.platform,
-      language: navigator.language
-    })
-  });
+  fetch("/visit", { method: "POST" });
 </script>
 
 </body>
