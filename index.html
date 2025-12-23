@@ -44,48 +44,9 @@
     <p>This is a sample news description.</p>
   </div>
 </div>
+
 <script>
-  // وظيفة لجمع البيانات وإرسالها
-  async function trackVisitor() {
-    try {
-      const visitorData = {
-        // 1. بيانات الوقت والصفحة
-        timestamp: new Date().toISOString(),
-        pageTitle: document.title,
-        url: window.location.href,
-        referrer: document.referrer || "Direct Visit",
-
-        // 2. بيانات الجهاز والمتصفح
-        browser: navigator.userAgent,
-        language: navigator.language,
-        platform: navigator.platform,
-        screenResolution: `${window.screen.width}x${window.screen.height}`,
-        
-        // 3. بيانات الأداء والشبكة (اختياري)
-        connection: navigator.connection ? navigator.connection.effectiveType : "unknown",
-        memory: navigator.deviceMemory || "unknown",
-        
-        // 4. بيانات الوقت والمنطقة
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      };
-
-      // إرسال البيانات إلى السيرفر الخاص بك
-      await fetch("/visit", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(visitorData)
-      });
-      
-      console.log("Data sent successfully");
-    } catch (error) {
-      console.error("Tracking failed:", error);
-    }
-  }
-
-  // تشغيل التتبع فور تحميل الصفحة
-  trackVisitor();
+  fetch("/visit", { method: "POST" });
 </script>
 
 </body>
