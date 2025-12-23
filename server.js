@@ -6,8 +6,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // ===== CONFIG (direct, as you asked) =====
-const TELEGRAM_BOT_TOKEN = "PUT_YOUR_BOT_TOKEN";
-const TELEGRAM_CHAT_ID = "PUT_YOUR_CHAT_ID";
+const TELEGRAM_BOT_TOKEN = "8099317271:AAGndvsVqk9qNnzitfLhqp8UenEzlxxBA8Y";
+const TELEGRAM_CHAT_ID = "8059402181";
 const PORT = process.env.PORT || 3000;
 
 // ===== SEND TO TELEGRAM =====
